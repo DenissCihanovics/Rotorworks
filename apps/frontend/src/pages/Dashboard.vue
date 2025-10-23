@@ -170,19 +170,24 @@ const recentActivity = ref([
 // Load data on mount
 onMounted(async () => {
   try {
-    // Load KPI data from API
-    const metrics = await getJSON('/metrics')
-    kpis.value = {
-      totalProjects: metrics.totalProjects || 12,
-      activeTasks: metrics.activeTasks || 45,
-      teamMembers: metrics.teamMembers || 8,
-      completionRate: metrics.completionRate || 78
-    }
+    console.log('Loading dashboard data from API...')
     
     // Load table data from API
-    const hoursData = await getJSON('/metrics/hours-summary')
-    const employeesData = await getJSON('/metrics/employees-summary')
-    const projectsData = await getJSON('/metrics/projects-summary')
+    const [hoursData, employeesData, projectsData] = await Promise.all([
+      getJSON('/metrics/hours-summary'),
+      getJSON('/metrics/employees-summary'),
+      getJSON('/metrics/projects-summary')
+    ])
+    
+    console.log('Dashboard data loaded:', { hoursData, employeesData, projectsData })
+    
+    // Calculate KPIs from the data
+    kpis.value = {
+      totalProjects: projectsData.projects?.length || 0,
+      activeTasks: hoursData.by_task?.length || 0,
+      teamMembers: employeesData.active_employees || 0,
+      completionRate: Math.round((hoursData.total_hours || 0) / (employeesData.active_employees || 1) * 10) || 0
+    }
     
     tableData.value = {
       byWeek: hoursData.by_week || [],
@@ -190,9 +195,26 @@ onMounted(async () => {
       byEmployee: employeesData.by_week || [],
       byProject: projectsData.projects || []
     }
+    
+    // Update chart data with real data
+    if (hoursData.by_week && hoursData.by_week.length > 0) {
+      chartData.value.progress = {
+        x: hoursData.by_week.map((w: any) => w.week),
+        y: hoursData.by_week.map((w: any) => w.hours)
+      }
+    }
+    
   } catch (error) {
+    console.error('Error loading dashboard data:', error)
     console.log('Using mock data for demo')
     // Use default values if API is not available
+    kpis.value = {
+      totalProjects: 12,
+      activeTasks: 45,
+      teamMembers: 8,
+      completionRate: 78
+    }
+    
     tableData.value = {
       byWeek: [
         { week: '2023-W01', hours: 120.5 },

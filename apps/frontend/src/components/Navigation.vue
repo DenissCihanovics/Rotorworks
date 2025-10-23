@@ -49,7 +49,7 @@
 .navigation {
   width: 280px;
   height: 100vh;
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  background: linear-gradient(180deg, #1e293b 0%, var(--bg-color, #0f172a) 100%);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;

@@ -3,9 +3,9 @@
     <div class="page-header">
       <h1 class="page-title">
         <span class="title-icon">⚙️</span>
-        Settings & Configuration
+        <span data-lang="page-title">Settings & Configuration</span>
       </h1>
-      <div class="page-subtitle">Manage your application preferences and system settings</div>
+      <div class="page-subtitle" data-lang="page-subtitle">Manage your application preferences and system settings</div>
     </div>
     
     <!-- Settings Sections -->
@@ -13,7 +13,7 @@
       <!-- General Settings -->
       <div class="settings-card">
         <div class="card-header">
-          <h3 class="card-title">🔧 General Settings</h3>
+          <h3 class="card-title">🔧 <span data-lang="general-settings">General Settings</span></h3>
           <div class="card-subtitle">Basic application preferences</div>
         </div>
         <div class="settings-content">
@@ -180,7 +180,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 
 // Settings state
 const settings = ref({
@@ -207,33 +207,168 @@ const saving = ref(false)
 const exporting = ref(false)
 const deleting = ref(false)
 
+// Translations object
+const translations = {
+  en: {
+    'page-title': 'Settings & Configuration',
+    'page-subtitle': 'Manage your application preferences and system settings',
+    'general-settings': 'General Settings',
+    'notifications': 'Notifications',
+    'data-privacy': 'Data & Privacy',
+    'system-info': 'System Information'
+  },
+  de: {
+    'page-title': 'Einstellungen & Konfiguration',
+    'page-subtitle': 'Verwalten Sie Ihre Anwendungseinstellungen und Systemeinstellungen',
+    'general-settings': 'Allgemeine Einstellungen',
+    'notifications': 'Benachrichtigungen',
+    'data-privacy': 'Daten & Datenschutz',
+    'system-info': 'Systeminformationen'
+  },
+  fr: {
+    'page-title': 'Paramètres et Configuration',
+    'page-subtitle': 'Gérez vos préférences d\'application et paramètres système',
+    'general-settings': 'Paramètres Généraux',
+    'notifications': 'Notifications',
+    'data-privacy': 'Données et Confidentialité',
+    'system-info': 'Informations Système'
+  },
+  es: {
+    'page-title': 'Configuración y Ajustes',
+    'page-subtitle': 'Gestiona tus preferencias de aplicación y configuraciones del sistema',
+    'general-settings': 'Configuración General',
+    'notifications': 'Notificaciones',
+    'data-privacy': 'Datos y Privacidad',
+    'system-info': 'Información del Sistema'
+  }
+}
+
+// Watch for changes in real-time
+watch(() => settings.value.theme, (newTheme) => {
+  console.log('Theme changed to:', newTheme)
+  applyTheme(newTheme)
+  // Сохраняем в localStorage при изменении
+  localStorage.setItem('userSettings', JSON.stringify(settings.value))
+})
+
+watch(() => settings.value.language, (newLanguage) => {
+  console.log('Language changed to:', newLanguage)
+  applyLanguage(newLanguage)
+  // Сохраняем в localStorage при изменении
+  localStorage.setItem('userSettings', JSON.stringify(settings.value))
+})
+
 // Load settings on mount
 onMounted(async () => {
+  // Сначала загружаем настройки из localStorage
+  loadSettingsFromStorage()
+  
+  // Затем загружаем с сервера
   await loadSettings()
   await loadSystemInfo()
 })
 
+// Load settings from localStorage
+const loadSettingsFromStorage = () => {
+  try {
+    const storedSettings = localStorage.getItem('userSettings')
+    if (storedSettings) {
+      const parsedSettings = JSON.parse(storedSettings)
+      settings.value = { ...settings.value, ...parsedSettings }
+      
+      // Применяем сохраненные настройки
+      applyTheme(settings.value.theme)
+      applyLanguage(settings.value.language)
+    }
+  } catch (error) {
+    console.error('Error loading settings from storage:', error)
+  }
+}
+
+// Apply language
+const applyLanguage = (language: string) => {
+  document.documentElement.lang = language
+  
+  // Здесь можно добавить логику для смены языка интерфейса
+  console.log('Language changed to:', language)
+  
+  // Пример: обновление текстов интерфейса
+  const elements = document.querySelectorAll('[data-lang]')
+  elements.forEach(element => {
+    const key = element.getAttribute('data-lang')
+    if (key && translations[language] && translations[language][key]) {
+      element.textContent = translations[language][key]
+    }
+  })
+}
+
+// Watch for theme changes
+const watchTheme = () => {
+  // Применяем тему при изменении
+  applyTheme(settings.value.theme)
+}
+
+// Watch for language changes  
+const watchLanguage = () => {
+  // Применяем язык при изменении
+  applyLanguage(settings.value.language)
+}
+
 // Load user settings
 const loadSettings = async () => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:3006'}/settings`)
+    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:3006'
+    console.log('Loading settings from:', `${apiBase}/settings`)
+    
+    const response = await fetch(`${apiBase}/settings`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
     const data = await response.json()
+    console.log('Settings response:', data)
+    
     if (data.success) {
       settings.value = { ...settings.value, ...data.settings }
+    } else {
+      console.error('API returned error:', data)
     }
   } catch (error) {
     console.error('Error loading settings:', error)
+    // Показываем пользователю ошибку
+    alert('Failed to load settings. Please check if the backend server is running.')
   }
 }
 
 // Load system information
 const loadSystemInfo = async () => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:3006'}/settings/system-info`)
+    const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:3006'
+    console.log('Loading system info from:', `${apiBase}/settings/system-info`)
+    
+    const response = await fetch(`${apiBase}/settings/system-info`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
     const data = await response.json()
+    console.log('System info response:', data)
     systemInfo.value = data
   } catch (error) {
     console.error('Error loading system info:', error)
+    // Не показываем alert для system info, так как это не критично
   }
 }
 
@@ -272,17 +407,38 @@ const saveSettings = async () => {
 // Apply theme
 const applyTheme = (theme: string) => {
   const root = document.documentElement
+  
+  // Удаляем предыдущие классы темы
+  root.classList.remove('theme-dark', 'theme-light', 'theme-auto')
+  
   if (theme === 'dark') {
+    root.classList.add('theme-dark')
     root.style.setProperty('--bg-color', '#0f172a')
     root.style.setProperty('--text-color', '#e2e8f0')
+    root.style.setProperty('--card-bg', 'rgba(255, 255, 255, 0.95)')
+    root.style.setProperty('--card-text', '#1f2937')
   } else if (theme === 'light') {
+    root.classList.add('theme-light')
     root.style.setProperty('--bg-color', '#ffffff')
     root.style.setProperty('--text-color', '#1f2937')
+    root.style.setProperty('--card-bg', 'rgba(255, 255, 255, 0.95)')
+    root.style.setProperty('--card-text', '#1f2937')
   } else {
     // Auto - follow system preference
+    root.classList.add('theme-auto')
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    applyTheme(prefersDark ? 'dark' : 'light')
+    if (prefersDark) {
+      root.style.setProperty('--bg-color', '#0f172a')
+      root.style.setProperty('--text-color', '#e2e8f0')
+    } else {
+      root.style.setProperty('--bg-color', '#ffffff')
+      root.style.setProperty('--text-color', '#1f2937')
+    }
+    root.style.setProperty('--card-bg', 'rgba(255, 255, 255, 0.95)')
+    root.style.setProperty('--card-text', '#1f2937')
   }
+  
+  console.log('Theme applied:', theme)
 }
 
 // Export data
@@ -386,12 +542,13 @@ const deleteAccount = async () => {
 }
 
 .settings-card {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--card-bg, rgba(255, 255, 255, 0.95));
   backdrop-filter: blur(10px);
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--card-text, #1f2937);
 }
 
 .card-header {

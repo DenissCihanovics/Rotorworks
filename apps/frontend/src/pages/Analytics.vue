@@ -154,10 +154,40 @@ const insights = ref([
 // Load data on mount
 onMounted(async () => {
   try {
-    // Load analytics data from API
-    const data = await getJSON('/analytics')
-    analyticsData.value = data
+    console.log('Loading analytics data from API...')
+    
+    // Load different metrics from API
+    const [hoursData, employeesData, projectsData] = await Promise.all([
+      getJSON('/metrics/hours-summary'),
+      getJSON('/metrics/employees-summary'),
+      getJSON('/metrics/projects-summary')
+    ])
+    
+    console.log('Hours data:', hoursData)
+    console.log('Employees data:', employeesData)
+    console.log('Projects data:', projectsData)
+    
+    // Transform API data to match our chart format
+    analyticsData.value.weeklyData = hoursData.by_week || []
+    analyticsData.value.taskData = hoursData.by_task || []
+    
+    // Update chart data with real data
+    if (hoursData.by_week && hoursData.by_week.length > 0) {
+      analyticsData.value.performance = {
+        x: hoursData.by_week.map((w: any) => w.week),
+        y: hoursData.by_week.map((w: any) => w.hours)
+      }
+    }
+    
+    if (projectsData.projects && projectsData.projects.length > 0) {
+      analyticsData.value.departments = {
+        x: projectsData.projects.map((p: any) => p.project_name),
+        y: projectsData.projects.map((p: any) => p.hours)
+      }
+    }
+    
   } catch (error) {
+    console.error('Error loading analytics data:', error)
     console.log('Using mock data for analytics')
     // Use mock data
     analyticsData.value.weeklyData = [

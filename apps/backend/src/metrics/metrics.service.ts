@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import { ENTRIES, applyFilters } from '../common/utils/mock-data'
 
-
 @Injectable()
 export class MetricsService {
-hoursSummary(q: any) {
-const rows = applyFilters(ENTRIES, q)
+  hoursSummary(q: any) {
+    const rows = applyFilters(ENTRIES, q)
 const total_hours = rows.reduce((s, r) => s + r.hours, 0)
 const by_week = Object.values(rows.reduce((acc: any, r) => {
 acc[r.week_iso] ??= { week: r.week_iso, hours: 0 }
@@ -31,8 +30,8 @@ return { total_hours, by_week, by_task, by_employee_type, by_project }
 }
 
 
-employeesSummary(q: any) {
-const rows = applyFilters(ENTRIES, q)
+  employeesSummary(q: any) {
+    const rows = applyFilters(ENTRIES, q)
 const employeesSet = new Set(rows.map(r => r.employee_id))
 const active_employees = employeesSet.size
 const total_hours = rows.reduce((s, r) => s + r.hours, 0)
@@ -47,8 +46,8 @@ return { active_employees, total_hours, avg_hours_per_employee, by_week }
 }
 
 
-projectsSummary(q: any) {
-const rows = applyFilters(ENTRIES, q)
+  projectsSummary(q: any) {
+    const rows = applyFilters(ENTRIES, q)
 const projects = Object.values(rows.reduce((acc: any, r) => {
 acc[r.project_id] ??= { project_id: r.project_id, project_name: r.project_name, hours: 0, employees: new Set<string>() }
 acc[r.project_id].hours += r.hours

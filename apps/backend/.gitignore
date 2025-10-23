@@ -1,0 +1,46 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build output
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Vite / Vue
+apps/frontend/dist/
+apps/frontend/.vite/
+apps/frontend/.DS_Store
+apps/frontend/.env.local
+
+# NestJS
+apps/backend/dist/
+apps/backend/.DS_Store
+apps/backend/.env
+apps/backend/.env.local
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Temporary / cache
+.tmp/
+.cache/
+coverage/
